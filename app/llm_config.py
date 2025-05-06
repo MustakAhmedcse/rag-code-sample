@@ -1,4 +1,5 @@
 import logging
+import os
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,4 +25,9 @@ class LLMConfig:
             logging.error(f"Unsupported provider: {provider}")
             raise ValueError(f"Unsupported provider: {provider}")
 
-llm_config = LLMConfig(provider="openai", model="gpt-4.1-nano", api_key="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")
+#llm_config = LLMConfig(provider="openai", model="gpt-4.1-nano")
+llm_config = LLMConfig(
+    provider="openai",
+    model="gpt-4.1-nano",
+    api_key=os.getenv("OPENAI_API_KEY")
+)
