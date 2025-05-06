@@ -1,6 +1,26 @@
-# Banglalink Retailer App Chatbot
+# Banglalink Retailer App RAG Chatbot
 
-This is a RAG (Retrieval-Augmented Generation) based chatbot designed to assist users of the Banglalink Retailer App. The chatbot is built using FastAPI and LangGraph, and it responds to questions in the language of the query (English or Bangla). It strictly answers questions related to the Banglalink Retailer App.
+## Project Structure
+
+```
+rag-code-new/
+│
+├── app/
+│   ├── __init__.py
+│   ├── api.py              # FastAPI endpoints (chatbot)
+│   ├── main.py             # FastAPI app entrypoint
+│   ├── rag_pipeline.py     # RAG pipeline logic
+│   ├── llm_config.py       # LLM config and initialization
+│   ├── utils.py            # Utility functions
+│   └── manual_upload.py    # Manual upload & vector DB processing
+│
+├── chroma_db/              # Vector DB files
+├── uploaded_manuals/       # Uploaded files
+├── requirements.txt
+├── README.MD
+├── user_manual.txt
+└── ...
+```
 
 ## Features
 - Provides step-by-step guidance for questions related to the Banglalink Retailer App.
@@ -24,64 +44,60 @@ This is a RAG (Retrieval-Augmented Generation) based chatbot designed to assist 
   - `langchain-openai`
   - `langgraph`
 
-## Setup Instructions
+## Setup & Usage
 
-### 1. Clone the Project
-```bash
-git clone <your-repo-url>
-cd rag-code-new
-```
+1. **Clone the Project**
+   ```bash
+   git clone <your-repo-url>
+   cd rag-code-new
+   ```
 
-### 2. Create and Activate a Virtual Environment
-```bash
-python -m venv rag_env
-.\rag_env\Scripts\activate  # On Windows
-# or
-source rag_env/bin/activate  # On Linux/Mac
-```
+2. **Create and Activate a Virtual Environment**
+   ```bash
+   python -m venv rag_env
+   .\rag_env\Scripts\activate  # On Windows
+   # or
+   source rag_env/bin/activate  # On Linux/Mac
+   ```
 
-### 3. Install Dependencies
-```bash
-pip install fastapi uvicorn pydantic langchain langchain-chroma langchain-huggingface langchain-ollama langchain-openai langgraph
-```
+3. **Install dependencies** (in your virtual environment):
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 4. Start the Ollama Server
-- Install Ollama and start the server:
-  ```bash
-  ollama serve
-  ```
-- Download the `llama3` model:
-  ```bash
-  ollama pull llama3
-  ```
+4. **Start the Ollama Server**
+   - Install Ollama and start the server:
+     ```bash
+     ollama serve
+     ```
+   - Download the `llama3` model:
+     ```bash
+     ollama pull llama3
+     ```
 
-### 5. Ingest Documents
-- Ingest data from your Banglalink Retailer App documents (PDF, text, etc.) using the following script:
-  ```python
-  from langchain_chroma import Chroma
-  from langchain_huggingface import HuggingFaceEmbeddings
-  from langchain.text_splitter import RecursiveCharacterTextSplitter
-  from langchain.document_loaders import PyPDFLoader
+5. **Upload a manual:**
+   - POST a file to `/upload_manual` (e.g., using Postman or curl)
+   - Example (using curl):
+     ```bash
+     curl -F "file=@user_manual.txt" http://localhost:8000/upload_manual
+     ```
 
-  # Load documents
-  loader = PyPDFLoader("path_to_your_manual.pdf")
-  documents = loader.load()
+6. **Run the FastAPI server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
 
-  # Split documents
-  text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-  splits = text_splitter.split_documents(documents)
+7. **Ask a question:**
+   - POST to `/ask` with JSON body `{ "question": "your question here" }`
+   - Example (using curl):
+     ```bash
+     curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d '{"question": "How do I register a device?"}'
+     ```
 
-  # Create vector store
-  embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-  vectorstore = Chroma.from_documents(documents=splits, embedding=embedding_model, persist_directory="./chroma_db")
-  ```
-- Replace the document path with the path to your manual file and run the script.
-
-### 6. Start the FastAPI Server
-```bash
-uvicorn app:app --reload
-```
-- This will start the server at `http://127.0.0.1:8000`.
+## Notes
+- All business logic is now modularized in the `app/` package.
+- The old `app.py` and `process_manual.py` are deprecated.
+- For custom logic or tests, add new modules under `app/` or a `tests/` folder.
 
 ## Usage Instructions
 
@@ -130,7 +146,7 @@ You can easily switch the LLM:
   ```python
   llm_config = LLMConfig(provider="openai", model="gpt-3.5-turbo", api_key="your-openai-api-key")
   ```
-- Modify the `llm_config` line in `app.py` and restart the server.
+- Modify the `llm_config` line in `app/llm_config.py` and restart the server.
 
 ## Troubleshooting
 - **If Bangla responses are not working**:
