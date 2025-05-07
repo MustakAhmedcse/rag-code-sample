@@ -1,5 +1,8 @@
 import logging
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +28,6 @@ class LLMConfig:
             logging.error(f"Unsupported provider: {provider}")
             raise ValueError(f"Unsupported provider: {provider}")
 
-#llm_config = LLMConfig(provider="openai", model="gpt-4.1-nano")
 llm_config = LLMConfig(
     provider="openai",
     model="gpt-4.1-nano",

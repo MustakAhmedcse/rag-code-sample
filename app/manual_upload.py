@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 import os
 import shutil
 import logging
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader, UnstructuredMarkdownLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -28,17 +28,22 @@ def upload_manual(file: UploadFile = File(...)):
             shutil.rmtree(UPLOAD_DIR)
         os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-        # Only accept .txt files
-        if not file.filename.lower().endswith('.txt'):
-            logging.warning(f"Rejected file upload: {file.filename} (not a .txt file)")
-            raise HTTPException(status_code=400, detail="Only .txt files are accepted.")
+        # Only accept .txt or .md files
+        if not (file.filename.lower().endswith('.txt') or file.filename.lower().endswith('.md')):
+            logging.warning(f"Rejected file upload: {file.filename} (not a .txt or .md file)")
+            raise HTTPException(status_code=400, detail="Only .txt or .md files are accepted.")
 
         file_location = os.path.join(UPLOAD_DIR, file.filename)
         logging.info(f"Received file upload: {file.filename}")
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         logging.info(f"Saved file to: {file_location}")
-        loader = TextLoader(file_location, encoding="utf-8")
+
+        # Use appropriate loader based on file extension
+        if file.filename.lower().endswith('.md'):
+            loader = UnstructuredMarkdownLoader(file_location)
+        else:
+            loader = TextLoader(file_location, encoding="utf-8")
         documents = loader.load()
         logging.info(f"Loaded {len(documents)} document(s) from file.")
         text_splitter = RecursiveCharacterTextSplitter(
